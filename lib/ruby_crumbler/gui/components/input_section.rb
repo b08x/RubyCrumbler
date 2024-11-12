@@ -120,7 +120,7 @@ module RubyCrumbler
                 msg_box('ERROR: No URL selected.')
               else
                 @projectname = File.basename(@input, '.*')
-                @doc = Features.new
+                @doc = RubyCrumbler::Pipeline::Features.new
                 puts @input unless @input.nil?
                 @doc.newproject(@input, @projectname)
                 msg_box('Notification', 'Upload successfully completed.')

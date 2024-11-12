@@ -8,7 +8,7 @@ module Logging
   require 'fileutils'
 
   # The directory where log files will be stored.
-  LOG_DIR = File.expand_path(File.join(__dir__, '..', 'log'))
+  LOG_DIR = File.expand_path(File.join(__dir__, '../..', 'log'))
 
   # The default log level.
   LOG_LEVEL = Logger::INFO

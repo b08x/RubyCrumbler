@@ -16,9 +16,10 @@ require 'pragmatic_tokenizer'
 require_relative '../config/settings'
 
 # Load core functionality
-require_relative 'ruby_crumbler/utils/logging'
-require_relative 'ruby_crumbler/pipeline'
-require_relative 'ruby_crumbler/gui'
+require_relative 'utils/logging'
+
+require_relative 'ruby_crumbler/pipeline/features'
+require_relative 'ruby_crumbler/gui/crumbler_gui'
 
 module RubyCrumbler
   include Logging
@@ -62,12 +63,11 @@ module RubyCrumbler
   class Configuration
     attr_accessor :custom_language_models,
                   :output_directory,
-                  :max_file_size,
-                  :logger
+                  :max_file_size
 
     def initialize
       @custom_language_models = {}
-      @output_directory = Dir.pwd
+      @output_directory = File.join(Dir.pwd, 'output')
       @max_file_size = Config::MAX_FILE_SIZE
     end
   end

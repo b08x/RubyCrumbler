@@ -1,4 +1,9 @@
 #!/usr/bin/env ruby
+require_relative 'tasks/cleaner'
+require_relative 'tasks/lemmatizer'
+require_relative 'tasks/ner'
+require_relative 'tasks/tagger'
+require_relative 'tasks/tokenizer'
 
 module RubyCrumbler
   module Pipeline
@@ -11,11 +16,11 @@ module RubyCrumbler
       include Logging
 
       def initialize
-        @cleaner = Cleaner.new
-        @tokenizer = Tokenizer.new
-        @tagger = Tagger.new
-        @lemmatizer = Lemmatizer.new
-        @ner = Ner.new
+        @cleaner = RubyCrumbler::Pipeline::Cleaner.new
+        @tokenizer = RubyCrumbler::Pipeline::Tokenizer.new
+        @tagger = RubyCrumbler::Pipeline::Tagger.new
+        @lemmatizer = RubyCrumbler::Pipeline::Lemmatizer.new
+        @ner = RubyCrumbler::Pipeline::Ner.new
         @processing_stats = { processed: 0, failed: 0, warnings: 0 }
       end
 
@@ -134,7 +139,8 @@ module RubyCrumbler
       end
 
       def process_directory(dir_path)
-        Dir.glob(File.join(dir_path, '*')).each do |file|
+        filetypes = 'pdf,md,markdown,txt,json,jsonl,html,png,wav,mp3'
+        Dir.glob(File.join(dir_path, "**{,/*/**}/*.{#{filetypes}}")).each do |file|
           next unless File.file?(file)
 
           begin

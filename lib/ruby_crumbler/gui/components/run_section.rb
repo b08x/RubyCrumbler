@@ -66,7 +66,9 @@ module RubyCrumbler
 
         def process_preprocessing
           if @processing_options.clcbchecked
-            @input_section.doc.cleaner.cleantext
+            cleaner = Pipeline::Cleaner.new
+            clean_text = cleaner.clean(@input_section)
+
             update_progress
           end
 
@@ -74,33 +76,39 @@ module RubyCrumbler
         end
 
         def process_normalization
-          if @processing_options.normchecked && !@processing_options.normlowchecked && !@processing_options.normcontchecked
-            @input_section.doc.normalize(false, @input_section.lang, false)
-            update_progress
-          elsif (@processing_options.normchecked && @processing_options.normlowchecked && !@processing_options.normcontchecked) ||
-                (@processing_options.normchecked && @processing_options.normcontchecked && !@processing_options.normlowchecked)
-            @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
-                                         @processing_options.normlowchecked)
-            update_progress(2)
-          elsif @processing_options.normchecked && @processing_options.normlowchecked && @processing_options.normcontchecked
-            @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
-                                         @processing_options.normlowchecked)
-            update_progress(3)
-          elsif !@processing_options.normchecked && @processing_options.normlowchecked && @processing_options.normcontchecked
-            @processing_options.norm.checked = true
-            @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
-                                         @processing_options.normlowchecked)
-            @processing_options.count += 1
-            update_progress(3)
-          elsif (!@processing_options.normchecked && @processing_options.normlowchecked && !@processing_options.normcontchecked) ||
-                (!@processing_options.normchecked && !@processing_options.normlowchecked && @processing_options.normcontchecked)
-            @processing_options.norm.checked = true
-            @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
-                                         @processing_options.normlowchecked)
-            @processing_options.count += 1
-            update_progress(2)
-          end
+          p @input_section.doc.methods
+          puts "\n---------\n"
+          exit
         end
+
+        # def process_normalization
+        #   if @processing_options.normchecked && !@processing_options.normlowchecked && !@processing_options.normcontchecked
+        #     @input_section.doc.normalize(false, @input_section.lang, false)
+        #     update_progress
+        #   elsif (@processing_options.normchecked && @processing_options.normlowchecked && !@processing_options.normcontchecked) ||
+        #         (@processing_options.normchecked && @processing_options.normcontchecked && !@processing_options.normlowchecked)
+        #     @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
+        #                                  @processing_options.normlowchecked)
+        #     update_progress(2)
+        #   elsif @processing_options.normchecked && @processing_options.normlowchecked && @processing_options.normcontchecked
+        #     @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
+        #                                  @processing_options.normlowchecked)
+        #     update_progress(3)
+        #   elsif !@processing_options.normchecked && @processing_options.normlowchecked && @processing_options.normcontchecked
+        #     @processing_options.norm.checked = true
+        #     @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
+        #                                  @processing_options.normlowchecked)
+        #     @processing_options.count += 1
+        #     update_progress(3)
+        #   elsif (!@processing_options.normchecked && @processing_options.normlowchecked && !@processing_options.normcontchecked) ||
+        #         (!@processing_options.normchecked && !@processing_options.normlowchecked && @processing_options.normcontchecked)
+        #     @processing_options.norm.checked = true
+        #     @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
+        #                                  @processing_options.normlowchecked)
+        #     @processing_options.count += 1
+        #     update_progress(2)
+        #   end
+        # end
 
         def process_nlp
           process_tokenization
@@ -122,7 +130,8 @@ module RubyCrumbler
 
           if !@processing_options.tokchecked && !@processing_options.autotokchecked
             # @processing_options.enable_tokenization
-            @input_section.doc.tokenizer(@input_section.lang)
+            tokenizer = Pipeline::Tokenizer.new
+            tokenizer.tokenize(@input_section.lang)
             @processing_options.count += 1
             update_progress
           end

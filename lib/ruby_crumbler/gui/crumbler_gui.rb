@@ -3,6 +3,7 @@
 module RubyCrumbler
   module GUI
     class CrumblerGUI
+      include Logging
       include Glimmer
       include RubyCrumbler::Pipeline
 
@@ -361,7 +362,7 @@ module RubyCrumbler
 
       def process_preprocessing
         if @clcbchecked
-          @doc.cleantext
+          @doc.cleaner.cleantext
           update_progress
         end
 

@@ -4,125 +4,95 @@ require_relative 'tokenizer'
 require_relative 'tagger'
 require_relative 'lemmatizer'
 require_relative 'ner'
-
 module RubyCrumbler
   module Pipeline
     class Features
+      class Error < StandardError; end
+      class FileNotFoundError < Error; end
+      class ProcessingError < Error; end
+      class ValidationError < Error; end
+
+      include Logging
+
       def initialize
         @cleaner = Cleaner.new
         @tokenizer = Tokenizer.new
         @tagger = Tagger.new
         @lemmatizer = Lemmatizer.new
         @ner = Ner.new
+        @processing_stats = { processed: 0, failed: 0, warnings: 0 }
       end
 
-      # multidir function is automatically called, if a folder is used for input
-      def multidir(directory)
-        directory = @projectdir
-        @filenumber = Dir.glob(File.join(directory, '**', '*')).select { |file| File.file?(file) }.count
-        print @filenumber
-        Dir.foreach(directory) do |filename|
-          next if ['.', '..'].include?(filename)
-
-          puts "working on #{filename}"
-          @filenamein = filename
-          @filename = File.basename(filename, '.*')
-          first = Nokogiri::HTML(File.open("#{@projectdir}/#{@filenamein}"))
-          doc = first.search('p').map(&:text)
-          # encode doc to correct encoding for German special characters
-          doc = doc.join('').encode('iso-8859-1').force_encoding('utf-8')
-          File.write("#{@projectdir}/#{@filename}", doc)
-        end
-      end
-
-      # create a new folder and copy chosen file to it OR copy all files in chosen directory to it OR write file from website into it
       def newproject(input, projectname)
-        @input = input
-        @projectname = projectname
-        @filename = File.basename(@input)
-        if !Dir.exist?("#{@projectname}")
-          @projectdir = "#{@projectname}"
+        validate_input!(input)
+        setup_project_directory(projectname)
+        process_input(input)
+      rescue Error => e
+        logger.error("Project creation failed: #{e.message}")
+        raise
+      rescue StandardError => e
+        logger.error("Unexpected error in project creation: #{e.message}")
+        raise Error, "Failed to create project: #{e.message}"
+      end
+
+      private
+
+      def validate_input!(input)
+        raise ValidationError, 'Input cannot be empty' if !input || input.strip.empty?
+
+        if File.file?(input)
+          validate_file!(input)
+        elsif File.directory?(input)
+          validate_directory!(input)
+        elsif input.match?(URI::DEFAULT_PARSER.make_regexp)
+          validate_url!(input)
         else
-          i = 1
-          i += 1 while Dir.exist?("#{@projectname}" + i.to_s)
-          @projectdir = "#{@projectname}" + i.to_s
-        end
-        Dir.mkdir(@projectdir)
-        if File.file?(@input)
-          FileUtils.cp(@input, @projectdir)
-          first = Nokogiri::HTML(File.open(@input))
-          doc = first.search('p').map(&:text)
-          @filenumber = 1
-          # encode doc to correct encoding for German specific characters
-          doc = doc.join('').encode('iso-8859-1').force_encoding('utf-8')
-          File.write("#{@projectdir}/#{@filename}", doc)
-        elsif File.directory?(@input)
-          FileUtils.cp_r Dir.glob(@input + '/*.*'), @projectdir
-          multidir(@projectdir)
-        else
-          first = Nokogiri::HTML(URI.open(@input))
-          doc = first.search('p', 'text').map(&:text)
-          @filenumber = 1
-          File.write("#{@projectdir}/#{@filename}.txt", doc)
+          raise ValidationError, "Invalid input: #{input}"
         end
       end
 
-      # Modified cleantext method in features.rb
-      def cleantext
-        Dir.foreach(@projectdir) do |filename|
-          next if ['.', '..'].include?(filename)
+      def validate_file!(file_path)
+        raise FileNotFoundError, "File not found: #{file_path}" unless File.exist?(file_path)
 
-          puts "working on #{filename}"
-          @filename = File.basename(filename, '.*')
-
-          # Find the actual file instead of using wildcard
-          file_path = Dir.glob(File.join(@projectdir, "#{@filename}.*")).first
-
-          if file_path && File.exist?(file_path)
-            @text2process = File.read(file_path)
-            @text2process = @cleaner.process(@text2process)
-            output_path = File.join(@projectdir, "#{@filename}_cl.txt")
-            File.write(output_path, @text2process)
-            p @text2process
-          else
-            logger.warn("File not found for cleaning: #{@filename}")
-          end
+        unless Config::SUPPORTED_EXTENSIONS.include?(File.extname(file_path).downcase)
+          raise ValidationError, "Unsupported file type: #{File.extname(file_path)}"
         end
+
+        if File.size(file_path) > Config::MAX_FILE_SIZE
+          raise ValidationError, "File too large: #{File.size(file_path)} bytes (max: #{Config::MAX_FILE_SIZE})"
+        end
+
+        return unless File.zero?(file_path)
+
+        raise ValidationError, "File is empty: #{file_path}"
       end
 
-      # Modified normalize method
-      def normalize(contractions = false, language = 'EN', lowercase = false)
-        files = Dir.glob(File.join(@projectdir, '*'))
+      def validate_directory!(dir)
+        raise FileNotFoundError, "Directory not found: #{dir}" unless Dir.exist?(dir)
+
+        files = Dir.glob(File.join(dir, '*'))
                    .select { |f| File.file?(f) }
-                   .sort_by { |f| File.mtime(f) }
-                   .take(@filenumber)
 
-        files.each do |file|
-          next unless File.exist?(file) # Extra safety check
+        raise ValidationError, "No files found in directory: #{dir}" if files.empty?
 
-          @filename = File.basename(file, '.*')
-          puts "working on #{@filename}"
+        invalid_files = files.reject { |f| validate_input_file(f) }
+        return if invalid_files.empty?
 
-          begin
-            @text2process = File.read(file)
-            @text2process = @cleaner.normalize(@text2process,
-                                               contractions: contractions,
-                                               language: language,
-                                               lowercase: lowercase)
-
-            suffix = lowercase ? '_nl' : '_n'
-            output_path = File.join(@projectdir, "#{@filename}#{suffix}.txt")
-            File.write(output_path, @text2process)
-            p @text2process
-          rescue StandardError => e
-            logger.error("Error processing file #{file}: #{e.message}")
-          end
-        end
+        logger.warn("Invalid files found: #{invalid_files.join(', ')}")
+        @processing_stats[:warnings] += invalid_files.size
       end
 
-      # Helper method to safely find input files
-      def find_input_file(filename)
-        Dir.glob(File.join(@projectdir, "#{filename}.*")).first
+      def validate_url!(url)
+        uri = URI.parse(url)
+        raise ValidationError, "Invalid URL: #{url}" unless uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
+      rescue URI::InvalidURIError
+        raise ValidationError, "Invalid URL format: #{url}"
+      end
+
+      def setup_project_directory(projectname)
+        @projectname = projectname
+        @projectdir = create_unique_directory(projectname)
+        ensure_directory(@projectdir)
       end
 
       # Helper method to ensure directory exists
@@ -140,91 +110,182 @@ module RubyCrumbler
         true
       end
 
-      # tokenize the input text and show number of tokens
-      def tokenizer(language)
-        Dir.glob(@projectdir + '/*.*').max_by(@filenumber) { |f| File.mtime(f) }.each do |file|
-          @filename = File.basename(file, '.*')
-          puts "working on #{@filename}"
-          @text2process = File.read(file)
+      def create_unique_directory(base_name)
+        dir_name = base_name
+        counter = 1
+        while Dir.exist?(dir_name)
+          dir_name = "#{base_name}#{counter}"
+          counter += 1
+        end
+        dir_name
+      end
 
-          tokens = @tokenizer.process(@text2process, language: language)
-          count = tokens.length
-
-          File.write("#{@projectdir}/#{@filename}_tok.txt", tokens)
-          puts("Total number of tokens: #{count}")
+      def process_input(input)
+        if File.file?(input)
+          process_single_file(input)
+        elsif File.directory?(input)
+          process_directory(input)
+        else
+          process_url(input)
         end
       end
 
-      # clean input from stopwords
-      def stopwordsclean(language)
-        Dir.glob(@projectdir + '/*.*').max_by(@filenumber) { |f| File.mtime(f) }.each do |file|
-          @filename = File.basename(file, '.*')
-          puts "working on #{@filename}"
-          @text2process = File.read(file)
-
-          tokens = @tokenizer.process(@text2process, language: language, remove_stopwords: true)
-          File.write("#{@projectdir}/#{@filename}_nost.txt", tokens)
-        end
+      def process_single_file(file_path)
+        copy_and_process_file(file_path)
+      rescue StandardError => e
+        handle_processing_error(file_path, e)
       end
 
-      # convert input tokens to their respective lemma
-      def lemmatizer(language)
-        Dir.glob(@projectdir + '/*.*').max_by(@filenumber) { |f| File.mtime(f) }.each do |file|
-          @filename = File.basename(file, '.*')
-          puts "working on #{@filename}"
-          @text2process = File.read(file)
+      def process_directory(dir_path)
+        Dir.glob(File.join(dir_path, '*')).each do |file|
+          next unless File.file?(file)
 
-          lemmatized = @lemmatizer.process(@text2process, language: language, format: :text)
-          File.write("#{@projectdir}/#{@filename}_lem.txt", lemmatized)
-        end
-      end
-
-      # POS tagging for input
-      def tagger(language)
-        Dir.glob(@projectdir + '/*.*').reject do |file|
-          file.end_with?('lem.txt')
-        end.max_by(@filenumber) { |f| File.mtime(f) }.each do |file|
-          @filename = File.basename(file, '.*')
-          puts "working on POS #{file}"
-          @text2process = File.read(file)
-
-          # Get tagged tokens in different formats
-          tagged_csv = @tagger.process(@text2process, language: language, format: :csv)
-          tagged_xml = @tagger.process(@text2process, language: language, format: :xml)
-          tagged_text = @tagger.process(@text2process, language: language)
-
-          # Save in different formats
-          File.open("#{@projectdir}/#{@filename}_pos.csv", 'w') do |f|
-            tagged_csv.each { |row| f.puts(row.join(',')) }
+          begin
+            copy_and_process_file(file) if validate_input_file(file)
+          rescue StandardError => e
+            handle_processing_error(file, e)
           end
-          File.write("#{@projectdir}/#{@filename}_pos.xml", tagged_xml)
-          File.write("#{@projectdir}/#{@filename}_pos.txt", tagged_text.map do |t|
-            "#{t[:text]}: pos:#{t[:pos]}, tag:#{t[:tag]}"
-          end)
         end
       end
 
-      # Named Entity Recognition for the input tokens
-      def ner(language)
-        Dir.glob(@projectdir + '/*.*').reject do |file|
-          file.end_with?('lem.txt') || file.end_with?('pos.txt') || file.end_with?('pos.csv') || file.end_with?('pos.xml')
-        end.max_by(@filenumber) { |f| File.mtime(f) }.each do |file|
-          @filename = File.basename(file, '.*')
-          puts "working on NER #{file}"
-          @text2process = File.read(file)
+      def process_url(url)
+        content = fetch_url_content(url)
+        output_path = File.join(@projectdir, "#{File.basename(url, '.*')}.txt")
+        File.write(output_path, content)
+        @processing_stats[:processed] += 1
+      rescue StandardError => e
+        handle_processing_error(url, e)
+      end
 
-          # Get entities in different formats
-          entities_csv = @ner.process(@text2process, language: language, format: :csv)
-          entities_xml = @ner.process(@text2process, language: language, format: :xml)
-          entities_text = @ner.process(@text2process, language: language)
+      def fetch_url_content(url)
+        response = URI.open(url)
+        doc = Nokogiri::HTML(response)
+        doc.search('p', 'text').map(&:text).join('\n')
+      rescue OpenURI::HTTPError => e
+        raise ProcessingError, "Failed to fetch URL (#{e.message}): #{url}"
+      rescue StandardError => e
+        raise ProcessingError, "Error processing URL: #{e.message}"
+      end
 
-          # Save in different formats
-          File.open("#{@projectdir}/#{@filename}_ner.csv", 'w') do |f|
-            entities_csv.each { |row| f.puts(row.join(',')) }
+      def copy_and_process_file(file_path)
+        FileUtils.cp(file_path, @projectdir)
+        process_content(file_path)
+        @processing_stats[:processed] += 1
+      end
+
+      def process_content(file_path)
+        content = File.read(file_path)
+        doc = Nokogiri::HTML(content)
+        processed_content = doc.search('p').map(&:text).join('\n')
+
+        # Handle encoding for special characters
+        processed_content = processed_content.encode('utf-8', invalid: :replace, undef: :replace)
+
+        output_path = File.join(@projectdir, File.basename(file_path))
+        File.write(output_path, processed_content)
+      rescue Encoding::InvalidByteSequenceError => e
+        raise ProcessingError, "Encoding error in file #{file_path}: #{e.message}"
+      rescue StandardError => e
+        raise ProcessingError, "Failed to process content: #{e.message}"
+      end
+
+      def handle_processing_error(source, error)
+        logger.error("Error processing #{source}: #{error.message}")
+        @processing_stats[:failed] += 1
+        raise ProcessingError, "Failed to process #{source}: #{error.message}"
+      end
+
+      # Enhanced version of cleantext with better error handling
+      def cleantext
+        validate_project_state!
+
+        Dir.foreach(@projectdir) do |filename|
+          next if ['.', '..'].include?(filename)
+
+          begin
+            process_file_cleaning(filename)
+          rescue StandardError => e
+            handle_processing_error(filename, e)
           end
-          File.write("#{@projectdir}/#{@filename}_ner.xml", entities_xml)
-          File.write("#{@projectdir}/#{@filename}_ner.txt", entities_text.map { |e| "#{e[:text]}: label:#{e[:label]}" })
         end
+
+        log_processing_summary
+      end
+
+      def process_file_cleaning(filename)
+        @filename = File.basename(filename, '.*')
+        file_path = find_input_file(@filename)
+
+        raise FileNotFoundError, "No matching file found for: #{@filename}" unless file_path
+
+        @text2process = File.read(file_path)
+        @text2process = @cleaner.process(@text2process)
+
+        output_path = File.join(@projectdir, "#{@filename}_cl.txt")
+        File.write(output_path, @text2process)
+
+        logger.info("Successfully cleaned file: #{filename}")
+        @processing_stats[:processed] += 1
+      end
+
+      def validate_project_state!
+        raise Error, 'Project directory not set' unless @projectdir
+        raise Error, "Project directory not found: #{@projectdir}" unless Dir.exist?(@projectdir)
+      end
+
+      def log_processing_summary
+        logger.info('Processing completed:')
+        logger.info("  Processed: #{@processing_stats[:processed]}")
+        logger.info("  Failed: #{@processing_stats[:failed]}")
+        logger.info("  Warnings: #{@processing_stats[:warnings]}")
+      end
+
+      # Add this to your existing normalize method
+      def normalize(contractions = false, language = 'EN', lowercase = false)
+        validate_project_state!
+        validate_language!(language)
+
+        files = get_files_to_process
+
+        files.each do |file|
+          process_file_normalization(file, contractions, language, lowercase)
+        rescue StandardError => e
+          handle_processing_error(file, e)
+        end
+
+        log_processing_summary
+      end
+
+      def get_files_to_process
+        Dir.glob(File.join(@projectdir, '*'))
+           .select { |f| File.file?(f) }
+           .sort_by { |f| File.mtime(f) }
+           .take(@filenumber || 1)
+      end
+
+      def validate_language!(language)
+        return if Config::SUPPORTED_LANGUAGES.key?(language.upcase)
+
+        raise ValidationError, "Unsupported language: #{language}"
+      end
+
+      def process_file_normalization(file, contractions, language, lowercase)
+        return unless File.exist?(file)
+
+        @filename = File.basename(file, '.*')
+        @text2process = File.read(file)
+
+        @text2process = @cleaner.normalize(@text2process,
+                                           contractions: contractions,
+                                           language: language,
+                                           lowercase: lowercase)
+
+        suffix = lowercase ? '_nl' : '_n'
+        output_path = File.join(@projectdir, "#{@filename}#{suffix}.txt")
+        File.write(output_path, @text2process)
+
+        logger.info("Successfully normalized file: #{@filename}")
+        @processing_stats[:processed] += 1
       end
     end
   end

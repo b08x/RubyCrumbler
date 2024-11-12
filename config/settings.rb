@@ -16,7 +16,7 @@ module RubyCrumbler
     }.freeze
 
     # File extensions that can be processed
-    SUPPORTED_EXTENSIONS = %w[.txt .html .xml].freeze
+    SUPPORTED_EXTENSIONS = %w[.txt .html .xml .md .markdown].freeze
 
     # Output formats
     OUTPUT_FORMATS = %w[txt csv xml].freeze
@@ -71,9 +71,7 @@ module RubyCrumbler
       # @return [Boolean] True if file is valid
       # @raise [ArgumentError] If file is invalid
       def validate_file!(file_path)
-        unless File.exist?(file_path)
-          raise ArgumentError, "File not found: #{file_path}"
-        end
+        raise ArgumentError, "File not found: #{file_path}" unless File.exist?(file_path)
 
         unless SUPPORTED_EXTENSIONS.include?(File.extname(file_path).downcase)
           raise ArgumentError, "Unsupported file type: #{File.extname(file_path)}"
@@ -92,9 +90,7 @@ module RubyCrumbler
       # @return [Boolean] True if language is supported
       # @raise [ArgumentError] If language is not supported
       def validate_language!(lang)
-        unless SUPPORTED_LANGUAGES.key?(lang.upcase)
-          raise ArgumentError, "Unsupported language: #{lang}"
-        end
+        raise ArgumentError, "Unsupported language: #{lang}" unless SUPPORTED_LANGUAGES.key?(lang.upcase)
 
         true
       end
@@ -115,9 +111,7 @@ module RubyCrumbler
       def validate_directory!(dir)
         FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
 
-        unless File.writable?(dir)
-          raise ArgumentError, "Directory not writable: #{dir}"
-        end
+        raise ArgumentError, "Directory not writable: #{dir}" unless File.writable?(dir)
 
         true
       end

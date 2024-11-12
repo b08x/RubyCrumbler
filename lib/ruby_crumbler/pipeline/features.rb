@@ -67,33 +67,77 @@ module RubyCrumbler
         end
       end
 
-      # clean and normalize text
+      # Modified cleantext method in features.rb
       def cleantext
         Dir.foreach(@projectdir) do |filename|
           next if ['.', '..'].include?(filename)
 
           puts "working on #{filename}"
           @filename = File.basename(filename, '.*')
-          @text2process = File.read("#{@projectdir}/#{@filename}.*")
-          @text2process = @cleaner.process(@text2process)
-          File.write("#{@projectdir}/#{@filename}_cl.txt", @text2process)
-          p @text2process
+
+          # Find the actual file instead of using wildcard
+          file_path = Dir.glob(File.join(@projectdir, "#{@filename}.*")).first
+
+          if file_path && File.exist?(file_path)
+            @text2process = File.read(file_path)
+            @text2process = @cleaner.process(@text2process)
+            output_path = File.join(@projectdir, "#{@filename}_cl.txt")
+            File.write(output_path, @text2process)
+            p @text2process
+          else
+            logger.warn("File not found for cleaning: #{@filename}")
+          end
         end
       end
 
-      # normalize text with optional contractions and lowercasing
+      # Modified normalize method
       def normalize(contractions = false, language = 'EN', lowercase = false)
-        Dir.glob(@projectdir + '/*.*').max_by(@filenumber) { |f| File.mtime(f) }.each do |file|
+        files = Dir.glob(File.join(@projectdir, '*'))
+                   .select { |f| File.file?(f) }
+                   .sort_by { |f| File.mtime(f) }
+                   .take(@filenumber)
+
+        files.each do |file|
+          next unless File.exist?(file) # Extra safety check
+
           @filename = File.basename(file, '.*')
           puts "working on #{@filename}"
-          @text2process = File.read(file)
-          @text2process = @cleaner.normalize(@text2process, contractions: contractions, language: language,
-                                                            lowercase: lowercase)
 
-          suffix = lowercase ? '_nl' : '_n'
-          File.write("#{@projectdir}/#{@filename}#{suffix}.txt", @text2process)
-          p @text2process
+          begin
+            @text2process = File.read(file)
+            @text2process = @cleaner.normalize(@text2process,
+                                               contractions: contractions,
+                                               language: language,
+                                               lowercase: lowercase)
+
+            suffix = lowercase ? '_nl' : '_n'
+            output_path = File.join(@projectdir, "#{@filename}#{suffix}.txt")
+            File.write(output_path, @text2process)
+            p @text2process
+          rescue StandardError => e
+            logger.error("Error processing file #{file}: #{e.message}")
+          end
         end
+      end
+
+      # Helper method to safely find input files
+      def find_input_file(filename)
+        Dir.glob(File.join(@projectdir, "#{filename}.*")).first
+      end
+
+      # Helper method to ensure directory exists
+      def ensure_directory(dir)
+        FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
+        dir
+      end
+
+      # Helper method to validate file
+      def validate_input_file(file_path)
+        return false unless file_path && File.exist?(file_path)
+        return false unless Config::SUPPORTED_EXTENSIONS.include?(File.extname(file_path).downcase)
+        return false if File.size(file_path) > Config::MAX_FILE_SIZE
+
+        true
       end
 
       # tokenize the input text and show number of tokens

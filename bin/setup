@@ -10,7 +10,7 @@ which overcommit > /dev/null 2>&1 && overcommit --install
 # paru -S chaotic-aur/python39 --noconfirm --needed
 
 # python3.10 -m venv .venv
-sudo dnf -y install link-grammar
+# sudo dnf -y install link-grammar
 
 python -m venv .venv
 source .venv/bin/activate
@@ -45,8 +45,8 @@ install_model() {
 if check_model_installed en_core_web_sm; then
     echo "en_core_web_sm is already installed."
 else
-    echo "Installing en_core_web_sm..."
-    install_model en_core_web_sm
+    echo "Installing en_core_web_lg..."
+    install_model en_core_web_lg
 fi
 
 

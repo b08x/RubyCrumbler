@@ -19,3 +19,5 @@ end
 gem "bundler", "~> 2.4"
 
 gem "builder", "~> 3.3"
+
+gem "pry", "~> 0.14.2"

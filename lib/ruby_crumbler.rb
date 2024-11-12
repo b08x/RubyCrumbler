@@ -17,8 +17,8 @@ require_relative '../config/settings'
 
 # Load core functionality
 require_relative 'ruby_crumbler/utils/logging'
-require_relative 'ruby_crumbler/pipeline/features'
-require_relative 'ruby_crumbler/gui/crumbler_gui'
+require_relative 'ruby_crumbler/pipeline'
+require_relative 'ruby_crumbler/gui'
 
 module RubyCrumbler
   include Logging

@@ -1,9 +1,5 @@
 #!/usr/bin/env ruby
-require_relative 'cleaner'
-require_relative 'tokenizer'
-require_relative 'tagger'
-require_relative 'lemmatizer'
-require_relative 'ner'
+
 module RubyCrumbler
   module Pipeline
     class Features
@@ -70,7 +66,8 @@ module RubyCrumbler
       def validate_directory!(dir)
         raise FileNotFoundError, "Directory not found: #{dir}" unless Dir.exist?(dir)
 
-        files = Dir.glob(File.join(dir, '*'))
+        filetypes = 'pdf,md,markdown,txt,json,jsonl,html,png,wav,mp3'
+        files = Dir.glob(File.join(dir, "**{,/*/**}/*.{#{filetypes}}"))
                    .select { |f| File.file?(f) }
 
         raise ValidationError, "No files found in directory: #{dir}" if files.empty?

@@ -1,93 +1,126 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 module RubyCrumbler
   module Config
-    # Application settings
-    APP_NAME = 'RubyCrumbler'
-    APP_VERSION = '0.0.9'
+    # Application version
+    APP_VERSION = '1.0.0'
 
-    # Window settings
-    WINDOW_WIDTH = 300
-    WINDOW_HEIGHT = 800
-    ABOUT_WINDOW_WIDTH = 700
-    ABOUT_WINDOW_HEIGHT = 500
-    DOCUMENTATION_WINDOW_WIDTH = 400
-    DOCUMENTATION_WINDOW_HEIGHT = 600
+    # Maximum file size in bytes (50MB)
+    MAX_FILE_SIZE = 52_428_800
 
-    # File settings
-    MAX_FILE_SIZE = 50 * 1024 * 1024 # 50MB in bytes
-    SUPPORTED_FILE_TYPES = %w[.txt .xml .html]
-
-    # Language settings
+    # Supported languages
     SUPPORTED_LANGUAGES = {
       'EN' => 'en_core_web_lg',
       'DE' => 'de_core_news_lg'
-    }
+    }.freeze
 
-    # File naming conventions
-    FILE_SUFFIXES = {
-      clean: 'cl',
-      normalize: 'n',
-      normalize_lowercase: 'l',
-      normalize_contractions: 'c',
-      tokenize: 'tok',
-      stopwords: 'nost',
-      lemmatize: 'lem',
-      pos_tag: 'pos',
-      ner: 'ner'
-    }
+    # File extensions that can be processed
+    SUPPORTED_EXTENSIONS = %w[.txt .html .xml].freeze
 
     # Output formats
-    OUTPUT_FORMATS = {
-      basic: ['txt'],
-      advanced: %w[txt csv xml]
-    }
+    OUTPUT_FORMATS = %w[txt csv xml].freeze
 
-    # Font settings
-    FONTS = {
-      default: {
-        family: 'Helvetica',
-        sizes: {
-          small: 12,
-          medium: 13,
-          large: 14
-        },
-        weights: {
-          normal: :normal,
-          bold: :bold
-        },
-        styles: {
-          normal: :normal,
-          italic: :italic
-        },
-        stretches: {
-          normal: :normal
-        }
-      }
-    }
+    # Default settings
+    DEFAULTS = {
+      output_directory: Dir.pwd,
+      language: 'EN',
+      max_file_size: MAX_FILE_SIZE,
+      log_level: :info
+    }.freeze
 
-    # Repository information
-    REPO_URL = 'https://github.com/joh-ga/RubyCrumbler'
+    class << self
+      # Returns the root directory of the application
+      #
+      # @return [String] The root directory path
+      def root
+        @root ||= File.expand_path('..', __dir__)
+      end
 
-    # Credits
-    DEVELOPERS = [
-      'Laura Bernardy',
-      'Nora Dirlam',
-      'Jakob Engel',
-      'Johanna Garthe'
-    ]
+      # Returns the current environment
+      #
+      # @return [String] The current environment (development, test, or production)
+      def env
+        ENV['RUBY_ENV'] || 'development'
+      end
 
-    # Feature descriptions
-    FEATURE_DESCRIPTIONS = {
-      data_cleaning: 'Removes redundant whitespaces, punctuation, special symbols, HTML tags, and URLs.',
-      normalization: 'Removes punctuation symbols.',
-      normalization_lowercase: 'Removes punctuation symbols and converts text to lowercase.',
-      normalization_contractions: 'Removes punctuation symbols and expands contractions.',
-      tokenization: 'Splits pre-processed data into individual tokens.',
-      stopword_removal: 'Removes common words that carry little meaning.',
-      lemmatization: 'Reduces words to their base form using POS classification.',
-      pos_tagging: 'Identifies and labels parts of speech.',
-      ner: 'Labels named entities such as persons, organizations, and places.'
-    }
+      # Checks if the current environment is development
+      #
+      # @return [Boolean] True if in development environment
+      def development?
+        env == 'development'
+      end
+
+      # Checks if the current environment is test
+      #
+      # @return [Boolean] True if in test environment
+      def test?
+        env == 'test'
+      end
+
+      # Checks if the current environment is production
+      #
+      # @return [Boolean] True if in production environment
+      def production?
+        env == 'production'
+      end
+
+      # Validates a file for processing
+      #
+      # @param file_path [String] Path to the file
+      # @return [Boolean] True if file is valid
+      # @raise [ArgumentError] If file is invalid
+      def validate_file!(file_path)
+        unless File.exist?(file_path)
+          raise ArgumentError, "File not found: #{file_path}"
+        end
+
+        unless SUPPORTED_EXTENSIONS.include?(File.extname(file_path).downcase)
+          raise ArgumentError, "Unsupported file type: #{File.extname(file_path)}"
+        end
+
+        if File.size(file_path) > MAX_FILE_SIZE
+          raise ArgumentError, "File too large: #{File.size(file_path)} bytes (max: #{MAX_FILE_SIZE} bytes)"
+        end
+
+        true
+      end
+
+      # Validates a language code
+      #
+      # @param lang [String] Language code (EN or DE)
+      # @return [Boolean] True if language is supported
+      # @raise [ArgumentError] If language is not supported
+      def validate_language!(lang)
+        unless SUPPORTED_LANGUAGES.key?(lang.upcase)
+          raise ArgumentError, "Unsupported language: #{lang}"
+        end
+
+        true
+      end
+
+      # Returns the spaCy model name for a language
+      #
+      # @param lang [String] Language code (EN or DE)
+      # @return [String] The spaCy model name
+      def language_model(lang)
+        SUPPORTED_LANGUAGES[lang.upcase]
+      end
+
+      # Ensures a directory exists and is writable
+      #
+      # @param dir [String] Directory path
+      # @return [Boolean] True if directory is valid
+      # @raise [ArgumentError] If directory is invalid
+      def validate_directory!(dir)
+        FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
+
+        unless File.writable?(dir)
+          raise ArgumentError, "Directory not writable: #{dir}"
+        end
+
+        true
+      end
+    end
   end
 end

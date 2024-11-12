@@ -21,3 +21,6 @@ gem "bundler", "~> 2.4"
 gem "builder", "~> 3.3"
 
 gem "pry", "~> 0.14.2"
+
+gem "ruby-lsp", "~> 0.21.3"
+gem "solargraph", "~> 0.48.0"

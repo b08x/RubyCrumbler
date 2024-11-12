@@ -5,6 +5,7 @@ module Logging
   module_function
 
   require 'logger'
+  require 'fileutils'
 
   # The directory where log files will be stored.
   LOG_DIR = File.expand_path(File.join(__dir__, '..', 'log'))
@@ -12,7 +13,7 @@ module Logging
   # The default log level.
   LOG_LEVEL = Logger::INFO
 
-  # The maximum size of a log file in bytes.
+  # The maximum size of a log file in bytes (2MB).
   LOG_MAX_SIZE = 2_145_728
 
   # The maximum number of log files to keep.
@@ -20,6 +21,9 @@ module Logging
 
   # A hash to store loggers for different classes and methods.
   @loggers = {}
+
+  # Ensure log directory exists
+  FileUtils.mkdir_p(LOG_DIR) unless Dir.exist?(LOG_DIR)
 
   # Returns the logger for the current class and method.
   #
@@ -42,11 +46,18 @@ module Logging
   end
 
   class << self
-    # Returns the default log level.
+    # Returns the default log level, considering environment.
     #
     # @return [Integer] The log level.
     def log_level
-      Logger::DEBUG
+      case ENV['RUBY_ENV']
+      when 'production'
+        Logger::INFO
+      when 'test'
+        Logger::ERROR
+      else
+        Logger::DEBUG
+      end
     end
 
     # Returns the logger for the specified class and method.
@@ -62,25 +73,37 @@ module Logging
 
     # Configures a logger for the specified class and method.
     #
-    # @param _classname [String] The name of the class.
-    # @param _methodname [String] The name of the method.
+    # @param classname [String] The name of the class.
+    # @param methodname [String] The name of the method.
     #
     # @return [Logger] The configured logger object.
-    def configure_logger_for(_classname, _methodname)
+    def configure_logger_for(classname, methodname)
       # Get the current date in YYYY-MM-DD format.
       current_date = Time.now.strftime('%Y-%m-%d')
 
       # Construct the log file path.
       log_file = File.join(LOG_DIR, "crumbler-#{current_date}.log")
 
-      # Create a new logger object.
+      # Create a new logger object with daily rotation.
       logger = Logger.new(log_file, LOG_MAX_FILES, LOG_MAX_SIZE)
 
-      # Set the log level.
+      # Set the log level based on environment.
       logger.level = log_level
+
+      # Configure the log format.
+      logger.formatter = proc do |severity, datetime, progname, msg|
+        "[#{datetime}] #{severity} -- #{classname}##{methodname}: #{msg}\n"
+      end
 
       # Return the configured logger object.
       logger
+    end
+
+    # Clear all loggers (useful for testing).
+    #
+    # @return [void]
+    def clear_loggers!
+      @loggers = {}
     end
   end
 end

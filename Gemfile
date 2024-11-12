@@ -5,6 +5,7 @@ ruby '3.2.4'
 gem 'dotenv'
 gem 'glimmer-dsl-libui'
 gem 'nokogiri'
+gem 'pragmatic_tokenizer'
 gem 'ruby-progressbar'
 gem 'ruby-spacy'
 gem 'terminal-table'
@@ -16,11 +17,8 @@ group :development do
   gem 'yard'
 end
 
-gem "bundler", "~> 2.4"
-
-gem "builder", "~> 3.3"
-
-gem "pry", "~> 0.14.2"
-
-gem "ruby-lsp", "~> 0.21.3"
-gem "solargraph", "~> 0.48.0"
+gem 'builder', '~> 3.3'
+gem 'bundler', '~> 2.4'
+gem 'pry', '~> 0.14.2'
+gem 'ruby-lsp', '~> 0.21.3'
+gem 'solargraph', '~> 0.48.0'

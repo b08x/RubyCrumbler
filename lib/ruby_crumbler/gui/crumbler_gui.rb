@@ -460,8 +460,10 @@ module RubyCrumbler
 
       def update_progress(increment = 1)
         @fincount += increment
-        @progressbar.value = (@fincount * 100 / @count)
-        @label.text = 'Text processing finished!' if @progressbar.value == 100
+        progress = (@fincount * 100.0 / @count).round
+        progress = [progress, 100].min # Ensure progress never exceeds 100
+        @progressbar.value = progress
+        @label.text = 'Text processing finished!' if progress == 100
       end
 
       def create_documentation_text

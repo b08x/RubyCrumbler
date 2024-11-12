@@ -10,6 +10,7 @@ require 'builder'
 require 'tk'
 require 'terminal-table'
 require 'ruby-progressbar'
+require 'pragmatic_tokenizer'
 
 # Load configuration
 require_relative '../config/settings'

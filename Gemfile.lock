@@ -69,6 +69,7 @@ GEM
     perfect-shape (1.0.8)
       equalizer (>= 0.0.11, < 1.1.0)
       matrix (>= 0.4.2, < 1.1.0)
+    pragmatic_tokenizer (3.2.1)
     prism (1.2.0)
     pry (0.14.2)
       coderay (~> 1.1)
@@ -176,6 +177,7 @@ DEPENDENCIES
   dotenv
   glimmer-dsl-libui
   nokogiri
+  pragmatic_tokenizer
   pry (~> 0.14.2)
   rspec
   rubocop

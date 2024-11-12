@@ -1,7 +1,67 @@
+# Ruby
+*.gem
+*.rbc
+/.config
+/coverage/
+/InstalledFiles
+/pkg/
+/spec/reports/
+/spec/examples.txt
+/test/tmp/
+/test/version_tmp/
+/tmp/
 
-.idea/.name
-.idea/vcs.xml
-.idea/workspace.xml
-Pipeline/gui.rb
-Pipeline/textexample_german/textexample_german.txt
-.idea/encodings.xml
+# Environment
+.env
+.env.*
+
+# Documentation
+/.yardoc/
+/_yardoc/
+/doc/
+/rdoc/
+
+# Dependencies
+/.bundle/
+/vendor/bundle
+/lib/bundler/man/
+
+# Logging
+*.log
+
+# Test files
+/spec/fixtures/
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE specific
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Project specific
+/test_project/
+*.txt
+!text_examples/**/*.txt
+*.csv
+*.xml
+
+# Ruby version/gemset
+.ruby-version
+.ruby-gemset
+
+# Local configuration
+config/settings.local.rb
+config/settings/*.local.rb
+config/environments/*.local.rb
+
+/.venv/

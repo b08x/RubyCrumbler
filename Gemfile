@@ -1,12 +1,23 @@
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-gem 'open-uri'
-gem 'nokogiri'
-gem 'fileutils'
-gem 'ruby-spacy'
+ruby '3.2.4'
+
+gem 'dotenv'
 gem 'glimmer-dsl-libui'
-gem 'csv'
-gem 'builder'
-gem 'tk'
-gem 'terminal-table'
+gem 'nokogiri'
 gem 'ruby-progressbar'
+gem 'ruby-spacy'
+gem 'terminal-table'
+gem 'tk'
+
+group :development do
+  gem 'rspec'
+  gem 'rubocop'
+  gem 'yard'
+end
+
+gem "bundler", "~> 2.4"
+
+gem "builder", "~> 3.3"
+
+gem "pry", "~> 0.14.2"

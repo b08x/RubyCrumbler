@@ -11,7 +11,7 @@ require 'tk'
 require 'terminal-table'
 require 'ruby-progressbar'
 
-module RubyCrumbler
+module Crumbler
   class PipelineFeatures
     # initialize globally used variables
     def initialize
@@ -667,7 +667,7 @@ module RubyCrumbler
 end
 
 class CrumblerGUI
-  include RubyCrumbler
+  include Crumbler
   include Glimmer
   ProgressBar.create
   def launch
@@ -676,7 +676,7 @@ class CrumblerGUI
       # About window with information about the creators and Github link to the repo
       menu_item('About') do
         on_clicked do
-          window('About RubyCrumbler', 700, 500, false) do
+          window('About Crumbler', 700, 500, false) do
             on_closing do
               window.destroy
               1
@@ -688,7 +688,7 @@ class CrumblerGUI
                   default_font family: 'Helvetica', size: 13, weight: :normal, italic: :normal, stretch: :normal
                   string do
                     font family: 'Helvetica', size: 14, weight: :bold, italic: :normal, stretch: :normal
-                    "RubyCrumbler Version 0.0.1\n\n"
+                    "Crumbler Version 0.0.1\n\n"
                   end
                   string("Developed by Laura Bernardy, Nora Dirlam, Jakob Engel, and Johanna Garthe.\nMarch 31, 2022\n\nThis project is open source on GitHub.")
                 end
@@ -697,7 +697,7 @@ class CrumblerGUI
               button('Go to GitHub Repository') do
                 stretchy true
                 on_clicked do
-                  system('open', 'https://github.com/joh-ga/RubyCrumbler')
+                  system('open', 'https://github.com/joh-ga/Crumbler')
                 end
               end
             end
@@ -784,7 +784,7 @@ class CrumblerGUI
                     font family: 'Helvetica', size: 13, weight: :bold, italic: :normal, stretch: :normal
                     "Information about the File Naming Convention\n\n"
                   end
-                  string("To enable a quick identification and location of your converted document depending on the feature applied, the following file naming convention is used in RubyCrumbler.\nAbbreviations are added to the source file name to indicate the features that have been applied to the document. The suffix of the new file name indicates the ouput file for the corresponding feature. For example, the file named “myfirsttext_cl_nlc_tok.txt” is the output file of the tokenization step.\n\nAbbreviations of the features:\n • Data cleaning = cl\n • Normalization = n \n • Normalization (lowercase) = l\n • Normalization (contractions) = c\n • Tokenization = tok\n • Stopword Removal = sw\n • Lemmatization = lem\n • Part-of-Speech Tagging = pos\n • Named Entity Recognition = ner\n\nFor each feature step the output format is TXT. POS tagging and NER are additionally saved in CSV and XML output format.\n\n\n")
+                  string("To enable a quick identification and location of your converted document depending on the feature applied, the following file naming convention is used in Crumbler.\nAbbreviations are added to the source file name to indicate the features that have been applied to the document. The suffix of the new file name indicates the ouput file for the corresponding feature. For example, the file named “myfirsttext_cl_nlc_tok.txt” is the output file of the tokenization step.\n\nAbbreviations of the features:\n • Data cleaning = cl\n • Normalization = n \n • Normalization (lowercase) = l\n • Normalization (contractions) = c\n • Tokenization = tok\n • Stopword Removal = sw\n • Lemmatization = lem\n • Part-of-Speech Tagging = pos\n • Named Entity Recognition = ner\n\nFor each feature step the output format is TXT. POS tagging and NER are additionally saved in CSV and XML output format.\n\n\n")
                   string do
                     font family: 'Helvetica', size: 13, weight: :bold, italic: :normal, stretch: :normal
                     "Notes\n\n"
@@ -795,7 +795,7 @@ class CrumblerGUI
               button('Go to GitHub Repository') do
                 stretchy false
                 on_clicked do
-                  system('open', 'https://github.com/joh-ga/RubyCrumbler')
+                  system('open', 'https://github.com/joh-ga/Crumbler')
                 end
               end
             end
@@ -807,7 +807,7 @@ class CrumblerGUI
     @fincount = 0
 
     ### START of main window
-    window('RubyCrumbler', 300, 800) do
+    window('Crumbler', 300, 800) do
       margined(true)
       # fullscreen(true) #opens GUI always directly in fullscreen
 

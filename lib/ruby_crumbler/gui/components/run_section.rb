@@ -67,8 +67,7 @@ module RubyCrumbler
         def process_preprocessing
           if @processing_options.clcbchecked
             cleaner = Pipeline::Cleaner.new
-            clean_text = cleaner.clean(@input_section)
-
+            clean_text = cleaner.process(File.read(@input_section.input))
             update_progress
           end
 
@@ -76,39 +75,33 @@ module RubyCrumbler
         end
 
         def process_normalization
-          p @input_section.doc.methods
-          puts "\n---------\n"
-          exit
+          if @processing_options.normchecked && !@processing_options.normlowchecked && !@processing_options.normcontchecked
+            @input_section.doc.normalize(false, @input_section.lang, false)
+            update_progress
+          elsif (@processing_options.normchecked && @processing_options.normlowchecked && !@processing_options.normcontchecked) ||
+                (@processing_options.normchecked && @processing_options.normcontchecked && !@processing_options.normlowchecked)
+            @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
+                                         @processing_options.normlowchecked)
+            update_progress(2)
+          elsif @processing_options.normchecked && @processing_options.normlowchecked && @processing_options.normcontchecked
+            @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
+                                         @processing_options.normlowchecked)
+            update_progress(3)
+          elsif !@processing_options.normchecked && @processing_options.normlowchecked && @processing_options.normcontchecked
+            @processing_options.norm.checked = true
+            @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
+                                         @processing_options.normlowchecked)
+            @processing_options.count += 1
+            update_progress(3)
+          elsif (!@processing_options.normchecked && @processing_options.normlowchecked && !@processing_options.normcontchecked) ||
+                (!@processing_options.normchecked && !@processing_options.normlowchecked && @processing_options.normcontchecked)
+            @processing_options.norm.checked = true
+            @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
+                                         @processing_options.normlowchecked)
+            @processing_options.count += 1
+            update_progress(2)
+          end
         end
-
-        # def process_normalization
-        #   if @processing_options.normchecked && !@processing_options.normlowchecked && !@processing_options.normcontchecked
-        #     @input_section.doc.normalize(false, @input_section.lang, false)
-        #     update_progress
-        #   elsif (@processing_options.normchecked && @processing_options.normlowchecked && !@processing_options.normcontchecked) ||
-        #         (@processing_options.normchecked && @processing_options.normcontchecked && !@processing_options.normlowchecked)
-        #     @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
-        #                                  @processing_options.normlowchecked)
-        #     update_progress(2)
-        #   elsif @processing_options.normchecked && @processing_options.normlowchecked && @processing_options.normcontchecked
-        #     @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
-        #                                  @processing_options.normlowchecked)
-        #     update_progress(3)
-        #   elsif !@processing_options.normchecked && @processing_options.normlowchecked && @processing_options.normcontchecked
-        #     @processing_options.norm.checked = true
-        #     @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
-        #                                  @processing_options.normlowchecked)
-        #     @processing_options.count += 1
-        #     update_progress(3)
-        #   elsif (!@processing_options.normchecked && @processing_options.normlowchecked && !@processing_options.normcontchecked) ||
-        #         (!@processing_options.normchecked && !@processing_options.normlowchecked && @processing_options.normcontchecked)
-        #     @processing_options.norm.checked = true
-        #     @input_section.doc.normalize(@processing_options.normcontchecked, @input_section.lang,
-        #                                  @processing_options.normlowchecked)
-        #     @processing_options.count += 1
-        #     update_progress(2)
-        #   end
-        # end
 
         def process_nlp
           process_tokenization
@@ -118,10 +111,21 @@ module RubyCrumbler
           process_ner
         end
 
+        def get_input_output_paths
+          input_path = @input_section.input.to_s
+          relative_path = input_path.to_s.sub(%r{^/}, '')
+          output_path = File.join('output', @input_section.projectname, relative_path)
+          [input_path, output_path]
+        end
+
         def process_tokenization
           return unless @processing_options.tokchecked
 
-          @input_section.doc.tokenizer(@input_section.lang)
+          tokenizer = Pipeline::Tokenizer.new
+          input_path, output_path = get_input_output_paths
+
+          FileUtils.mkdir_p(File.dirname(output_path))
+          tokenizer.tokenize(File.read(input_path))
           update_progress
         end
 
@@ -129,12 +133,15 @@ module RubyCrumbler
           return unless @processing_options.srchecked
 
           if !@processing_options.tokchecked && !@processing_options.autotokchecked
-            # @processing_options.enable_tokenization
             tokenizer = Pipeline::Tokenizer.new
-            tokenizer.tokenize(@input_section.lang)
+            input_path, output_path = get_input_output_paths
+
+            FileUtils.mkdir_p(File.dirname(output_path))
+            tokenizer.tokenize(File.read(input_path))
             @processing_options.count += 1
             update_progress
           end
+
           @input_section.doc.stopwordsclean(@input_section.lang)
           update_progress
         end
@@ -143,11 +150,15 @@ module RubyCrumbler
           return unless @processing_options.lemchecked
 
           if !@processing_options.tokchecked && !@processing_options.autotokchecked
-            # @processing_options.enable_tokenization
-            @input_section.doc.tokenizer(@input_section.lang)
+            tokenizer = Pipeline::Tokenizer.new
+            input_path, output_path = get_input_output_paths
+
+            FileUtils.mkdir_p(File.dirname(output_path))
+            tokenizer.tokenize(File.read(input_path))
             @processing_options.count += 1
             update_progress
           end
+
           @input_section.doc.lemmatizer(@input_section.lang)
           update_progress
         end
@@ -156,11 +167,15 @@ module RubyCrumbler
           return unless @processing_options.poschecked
 
           if !@processing_options.tokchecked && !@processing_options.autotokchecked
-            # @processing_options.enable_tokenization
-            @input_section.doc.tokenizer(@input_section.lang)
+            tokenizer = Pipeline::Tokenizer.new
+            input_path, output_path = get_input_output_paths
+
+            FileUtils.mkdir_p(File.dirname(output_path))
+            tokenizer.tokenize(File.read(input_path))
             @processing_options.count += 1
             update_progress
           end
+
           @input_section.doc.tagger(@input_section.lang)
           update_progress
         end
@@ -169,11 +184,15 @@ module RubyCrumbler
           return unless @processing_options.nerchecked
 
           if !@processing_options.tokchecked && !@processing_options.autotokchecked
-            # @processing_options.enable_tokenization
-            @input_section.doc.tokenizer(@input_section.lang)
+            tokenizer = Pipeline::Tokenizer.new
+            input_path, output_path = get_input_output_paths
+
+            FileUtils.mkdir_p(File.dirname(output_path))
+            tokenizer.tokenize(File.read(input_path))
             @processing_options.count += 1
             update_progress
           end
+
           @input_section.doc.ner(@input_section.lang)
           update_progress
         end

@@ -15,6 +15,8 @@ module RubyCrumbler
 
       include Logging
 
+      attr_reader :cleaner, :tokenizer, :tagger, :lemmatizer, :ner, :processing_stats
+
       def initialize
         @cleaner = RubyCrumbler::Pipeline::Cleaner.new
         @tokenizer = RubyCrumbler::Pipeline::Tokenizer.new
@@ -93,7 +95,7 @@ module RubyCrumbler
 
       def setup_project_directory(projectname)
         @projectname = projectname
-        @projectdir = create_unique_directory(projectname)
+        @projectdir = File.join('output', projectname)
         ensure_directory(@projectdir)
       end
 
@@ -110,16 +112,6 @@ module RubyCrumbler
         return false if File.size(file_path) > Config::MAX_FILE_SIZE
 
         true
-      end
-
-      def create_unique_directory(base_name)
-        dir_name = base_name
-        counter = 1
-        while Dir.exist?(dir_name)
-          dir_name = "#{base_name}#{counter}"
-          counter += 1
-        end
-        dir_name
       end
 
       def process_input(input)
@@ -153,7 +145,9 @@ module RubyCrumbler
 
       def process_url(url)
         content = fetch_url_content(url)
-        output_path = File.join(@projectdir, "#{File.basename(url, '.*')}.txt")
+        url_path = url.gsub(%r{^https?://}, '').gsub(%r{[^a-zA-Z0-9/.]}, '_')
+        output_path = File.join(@projectdir, url_path)
+        ensure_directory(File.dirname(output_path))
         File.write(output_path, content)
         @processing_stats[:processed] += 1
       rescue StandardError => e
@@ -171,12 +165,16 @@ module RubyCrumbler
       end
 
       def copy_and_process_file(file_path)
-        FileUtils.cp(file_path, @projectdir)
-        process_content(file_path)
+        relative_path = file_path.start_with?('/') ? file_path[1..-1] : file_path
+        output_path = File.join(@projectdir, relative_path)
+        ensure_directory(File.dirname(output_path))
+
+        FileUtils.cp(file_path, output_path)
+        process_content(file_path, output_path)
         @processing_stats[:processed] += 1
       end
 
-      def process_content(file_path)
+      def process_content(file_path, output_path)
         content = File.read(file_path)
         doc = Nokogiri::HTML(content)
         processed_content = doc.search('p').map(&:text).join('\n')
@@ -184,7 +182,6 @@ module RubyCrumbler
         # Handle encoding for special characters
         processed_content = processed_content.encode('utf-8', invalid: :replace, undef: :replace)
 
-        output_path = File.join(@projectdir, File.basename(file_path))
         File.write(output_path, processed_content)
       rescue Encoding::InvalidByteSequenceError => e
         raise ProcessingError, "Encoding error in file #{file_path}: #{e.message}"
@@ -198,36 +195,34 @@ module RubyCrumbler
         raise ProcessingError, "Failed to process #{source}: #{error.message}"
       end
 
-      # Enhanced version of cleantext with better error handling
       def cleantext
         validate_project_state!
 
-        Dir.foreach(@projectdir) do |filename|
-          next if ['.', '..'].include?(filename)
+        Dir.glob(File.join(@projectdir, '**', '*')).each do |file_path|
+          next unless File.file?(file_path)
 
           begin
-            process_file_cleaning(filename)
+            process_file_cleaning(file_path)
           rescue StandardError => e
-            handle_processing_error(filename, e)
+            handle_processing_error(file_path, e)
           end
         end
 
         log_processing_summary
       end
 
-      def process_file_cleaning(filename)
-        @filename = File.basename(filename, '.*')
-        file_path = find_input_file(@filename)
-
-        raise FileNotFoundError, "No matching file found for: #{@filename}" unless file_path
+      def process_file_cleaning(file_path)
+        relative_path = file_path[@projectdir.length + 1..-1]
+        @filename = File.basename(relative_path, '.*')
 
         @text2process = File.read(file_path)
         @text2process = @cleaner.process(@text2process)
 
-        output_path = File.join(@projectdir, "#{@filename}_cl.txt")
+        output_path = File.join(File.dirname(file_path), "#{@filename}_cl.txt")
+        ensure_directory(File.dirname(output_path))
         File.write(output_path, @text2process)
 
-        logger.info("Successfully cleaned file: #{filename}")
+        logger.info("Successfully cleaned file: #{relative_path}")
         @processing_stats[:processed] += 1
       end
 
@@ -243,7 +238,6 @@ module RubyCrumbler
         logger.info("  Warnings: #{@processing_stats[:warnings]}")
       end
 
-      # Add this to your existing normalize method
       def normalize(contractions = false, language = 'EN', lowercase = false)
         validate_project_state!
         validate_language!(language)
@@ -260,7 +254,7 @@ module RubyCrumbler
       end
 
       def get_files_to_process
-        Dir.glob(File.join(@projectdir, '*'))
+        Dir.glob(File.join(@projectdir, '**', '*'))
            .select { |f| File.file?(f) }
            .sort_by { |f| File.mtime(f) }
            .take(@filenumber || 1)
@@ -272,11 +266,12 @@ module RubyCrumbler
         raise ValidationError, "Unsupported language: #{language}"
       end
 
-      def process_file_normalization(file, contractions, language, lowercase)
-        return unless File.exist?(file)
+      def process_file_normalization(file_path, contractions, language, lowercase)
+        return unless File.exist?(file_path)
 
-        @filename = File.basename(file, '.*')
-        @text2process = File.read(file)
+        relative_path = file_path[@projectdir.length + 1..-1]
+        @filename = File.basename(relative_path, '.*')
+        @text2process = File.read(file_path)
 
         @text2process = @cleaner.normalize(@text2process,
                                            contractions: contractions,
@@ -284,10 +279,11 @@ module RubyCrumbler
                                            lowercase: lowercase)
 
         suffix = lowercase ? '_nl' : '_n'
-        output_path = File.join(@projectdir, "#{@filename}#{suffix}.txt")
+        output_path = File.join(File.dirname(file_path), "#{@filename}#{suffix}.txt")
+        ensure_directory(File.dirname(output_path))
         File.write(output_path, @text2process)
 
-        logger.info("Successfully normalized file: #{@filename}")
+        logger.info("Successfully normalized file: #{relative_path}")
         @processing_stats[:processed] += 1
       end
     end

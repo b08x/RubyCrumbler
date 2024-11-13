@@ -16,7 +16,7 @@ module RubyCrumbler
     }.freeze
 
     # File extensions that can be processed
-    SUPPORTED_EXTENSIONS = %w[.txt .html .xml .md .markdown .pdf .mp3 .wav].freeze
+    SUPPORTED_EXTENSIONS = %w[.txt .json .jsonl .html .xml .md .markdown .pdf .mp3 .wav].freeze
 
     # Output formats
     OUTPUT_FORMATS = %w[txt csv xml].freeze

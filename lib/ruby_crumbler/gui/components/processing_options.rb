@@ -6,12 +6,22 @@ module RubyCrumbler
       class ProcessingOptions
         include Glimmer
 
-        attr_reader :count, :clcbchecked, :normchecked, :normlowchecked, :normcontchecked,
-                    :tokchecked, :srchecked, :lemchecked, :poschecked, :nerchecked,
-                    :autotokchecked, :norm, :tok
+        attr_accessor :count, :clcbchecked, :normchecked, :normlowchecked, :normcontchecked,
+                      :tokchecked, :srchecked, :lemchecked, :poschecked, :nerchecked,
+                      :autotokchecked, :norm, :tok
 
         def initialize
           @count = 0
+          @clcbchecked = false
+          @normchecked = false
+          @normlowchecked = false
+          @normcontchecked = false
+          @tokchecked = false
+          @srchecked = false
+          @lemchecked = false
+          @poschecked = false
+          @nerchecked = false
+          @autotokchecked = false
         end
 
         def create(container)
@@ -34,7 +44,7 @@ module RubyCrumbler
                 stretchy false
                 on_toggled do |_c|
                   @clcbchecked = @clcb.checked?
-                  @count += 1 if @clcb.checked == true
+                  self.count += 1 if @clcb.checked?
                 end
               end
 
@@ -42,7 +52,7 @@ module RubyCrumbler
                 stretchy false
                 on_toggled do |_c|
                   @normchecked = @norm.checked?
-                  @count += 1 if @norm.checked == true
+                  self.count += 1 if @norm.checked?
                 end
               end
 
@@ -50,7 +60,7 @@ module RubyCrumbler
                 stretchy false
                 on_toggled do |_c|
                   @normlowchecked = @normlow.checked?
-                  @count += 1 if @normlow.checked == true
+                  self.count += 1 if @normlow.checked?
                 end
               end
 
@@ -58,7 +68,7 @@ module RubyCrumbler
                 stretchy false
                 on_toggled do |_c|
                   @normcontchecked = @normcont.checked?
-                  @count += 1 if @normcont.checked == true
+                  self.count += 1 if @normcont.checked?
                 end
               end
             end
@@ -76,7 +86,7 @@ module RubyCrumbler
                 stretchy false
                 on_toggled do |_c|
                   @tokchecked = @tok.checked?
-                  @count += 1 if @tok.checked? == true
+                  self.count += 1 if @tok.checked?
                 end
               end
 
@@ -84,7 +94,7 @@ module RubyCrumbler
                 stretchy false
                 on_toggled do |_c|
                   @srchecked = @sr.checked?
-                  @count += 1 if @sr.checked == true
+                  self.count += 1 if @sr.checked?
                 end
               end
 
@@ -92,7 +102,7 @@ module RubyCrumbler
                 stretchy false
                 on_toggled do |_c|
                   @lemchecked = @lem.checked?
-                  @count += 1 if @lem.checked == true
+                  self.count += 1 if @lem.checked?
                 end
               end
 
@@ -100,7 +110,7 @@ module RubyCrumbler
                 stretchy false
                 on_toggled do |_c|
                   @poschecked = @pos.checked?
-                  @count += 1 if @pos.checked == true
+                  self.count += 1 if @pos.checked?
                 end
               end
 
@@ -108,16 +118,17 @@ module RubyCrumbler
                 stretchy false
                 on_toggled do |_c|
                   @nerchecked = @ner.checked?
-                  @count += 1 if @ner.checked == true
+                  self.count += 1 if @ner.checked?
                 end
               end
             end
           end
         end
 
-        # def enable_tokenization
-        #   @autotokchecked = (@tok.checked = true)
-        # end
+        def enable_tokenization
+          @autotokchecked = true
+          @tok.checked = true if @tok
+        end
       end
     end
   end

@@ -1,16 +1,15 @@
 #!/usr/bin/env ruby
 
-require_relative 'components/menu_bar'
-require_relative 'components/input_section'
-require_relative 'components/processing_options'
-require_relative 'components/run_section'
+require_relative 'gui/menu_bar'
+require_relative 'gui/input_section'
+require_relative 'gui/processing_options'
+require_relative 'gui/run_section'
 
-module RubyCrumbler
+module Crumbler
   module GUI
     class CrumblerGUI
-      include Logging
       include Glimmer
-      include RubyCrumbler::Pipeline
+      include Crumbler::Pipeline
 
       def initialize
         ProgressBar.create
@@ -26,7 +25,7 @@ module RubyCrumbler
       private
 
       def create_main_window
-        window('RubyCrumbler', 300, 800) do
+        window('Crumbler', 300, 800) do
           margined(true)
           vertical_box do
             @input_section.create

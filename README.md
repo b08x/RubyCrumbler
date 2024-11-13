@@ -1,9 +1,9 @@
-# RubyCrumbler
+# Crumbler
 
-Ready to crumble your text for common NLP tasks? This repository is home of RubyCrumbler, a simple script to download, that provides a GUI desktop application written in Ruby to apply common Natural Language Processing (NLP) tasks on your English or German text files.
+Ready to crumble your text for common NLP tasks? This repository is home of Crumbler, a simple script to download, that provides a GUI desktop application written in Ruby to apply common Natural Language Processing (NLP) tasks on your English or German text files.
 
 The script may also run with older Ruby versions. It was sucessfully tested with Ruby 2.7 on Linux. You're welcome to give us feedback if it is possible to run it with other older versions.<br>
-Note: Before using RubyCrumbler, make sure you have downloaded the respective spaCy models (EN: [en_core_web_lg](https://spacy.io/models/en), DE: [de_core_news_lg](https://spacy.io/models/de)).<br>
+Note: Before using Crumbler, make sure you have downloaded the respective spaCy models (EN: [en_core_web_lg](https://spacy.io/models/en), DE: [de_core_news_lg](https://spacy.io/models/de)).<br>
 
 Linux:
 
@@ -63,10 +63,10 @@ Abbreviations are added to the source file name to indicate the features that ha
 
 For each feature step the output format is TXT. POS tagging and NER are additionally saved in CSV and XML output format.
 
-## Pipeline Structure of RubyCrumbler
+## Pipeline Structure of Crumbler
 
 The program is built based on the following pipeline structure.<br>
-![alt text](https://github.com/joh-ga/RubyCrumbler/blob/43bf06a8dc118f2e5c9eac252f3b7158fb00b5fe/img/rubycrumbler_pipeline.png)<br>
+![alt text](https://github.com/joh-ga/Crumbler/blob/43bf06a8dc118f2e5c9eac252f3b7158fb00b5fe/img/rubycrumbler_pipeline.png)<br>
 
 ## Project Structure
 
@@ -75,8 +75,8 @@ The program is built based on the following pipeline structure.<br>
 ├── bin/
 │   └── rubycrumbler           # Executable script
 ├── lib/
-│   ├── ruby_crumbler.rb       # Main module file
-│   └── ruby_crumbler/
+│   ├── crumbler.rb       # Main module file
+│   └── crumbler/
 │       ├── pipeline/
 │       │   └── features.rb    # Text processing features
 │       └── gui/

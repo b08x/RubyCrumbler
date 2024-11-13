@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe RubyCrumbler::Pipeline::Features do
+RSpec.describe Crumbler::Pipeline::Features do
   let(:features) { described_class.new }
   let(:test_dir) { File.join(Dir.pwd, 'spec', 'fixtures') }
   let(:test_file) { File.join(test_dir, 'test.txt') }
@@ -29,30 +29,30 @@ RSpec.describe RubyCrumbler::Pipeline::Features do
         features.newproject(test_file, 'test_project')
         features.newproject(test_file, 'test_project')
         expect(Dir.exist?('test_project2')).to be true
-        FileUtils.rm_rf(['test_project', 'test_project2'])
+        FileUtils.rm_rf(%w[test_project test_project2])
       end
     end
 
     context 'with invalid input' do
       it 'raises error for non-existent file' do
-        expect {
+        expect do
           features.newproject('nonexistent.txt', 'test_project')
-        }.to raise_error(ArgumentError, /File not found/)
+        end.to raise_error(ArgumentError, /File not found/)
       end
 
       it 'raises error for unsupported file type' do
         invalid_file = File.join(test_dir, 'test.pdf')
         File.write(invalid_file, 'test content')
-        expect {
+        expect do
           features.newproject(invalid_file, 'test_project')
-        }.to raise_error(ArgumentError, /Unsupported file type/)
+        end.to raise_error(ArgumentError, /Unsupported file type/)
       end
 
       it 'raises error for file size exceeding limit' do
-        File.write(large_file, 'x' * (RubyCrumbler::Config::MAX_FILE_SIZE + 1))
-        expect {
+        File.write(large_file, 'x' * (Crumbler::Config::MAX_FILE_SIZE + 1))
+        expect do
           features.newproject(large_file, 'test_project')
-        }.to raise_error(ArgumentError, /File too large/)
+        end.to raise_error(ArgumentError, /File too large/)
       end
     end
   end
@@ -211,7 +211,7 @@ RSpec.describe RubyCrumbler::Pipeline::Features do
       lemmatized_file = Dir.glob(File.join('test_project', '*_lem.txt')).first
       expect(File.exist?(lemmatized_file)).to be true
       content = File.read(lemmatized_file)
-      expect(content).to include('lemma:be')  # "is" -> "be"
+      expect(content).to include('lemma:be') # "is" -> "be"
     end
 
     it 'handles German text' do
@@ -222,7 +222,7 @@ RSpec.describe RubyCrumbler::Pipeline::Features do
       lemmatized_file = Dir.glob(File.join('test_project', '*_lem.txt')).first
       expect(File.exist?(lemmatized_file)).to be true
       content = File.read(lemmatized_file)
-      expect(content).to include('lemma:sein')  # "ist" -> "sein"
+      expect(content).to include('lemma:sein') # "ist" -> "sein"
     end
   end
 
@@ -243,7 +243,7 @@ RSpec.describe RubyCrumbler::Pipeline::Features do
       expect(File.exist?(pos_file.sub('.txt', '.csv'))).to be true
       expect(File.exist?(pos_file.sub('.txt', '.xml'))).to be true
       content = File.read(pos_file)
-      expect(content).to include('pos:NOUN')  # "World" should be tagged as noun
+      expect(content).to include('pos:NOUN') # "World" should be tagged as noun
     end
 
     it 'generates valid XML output' do

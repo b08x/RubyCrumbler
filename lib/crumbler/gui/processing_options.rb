@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-module RubyCrumbler
+module Crumbler
   module GUI
     module Components
       class ProcessingOptions

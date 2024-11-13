@@ -1,11 +1,15 @@
 #!/usr/bin/env ruby
-require_relative 'tasks/cleaner'
-require_relative 'tasks/lemmatizer'
-require_relative 'tasks/ner'
-require_relative 'tasks/tagger'
-require_relative 'tasks/tokenizer'
 
-module RubyCrumbler
+require 'pragmatic_tokenizer'
+require 'ruby-spacy'
+
+require_relative 'pipeline/cleaner'
+require_relative 'pipeline/lemmatizer'
+require_relative 'pipeline/ner'
+require_relative 'pipeline/tagger'
+require_relative 'pipeline/tokenizer'
+
+module Crumbler
   module Pipeline
     class Features
       class Error < StandardError; end
@@ -13,16 +17,14 @@ module RubyCrumbler
       class ProcessingError < Error; end
       class ValidationError < Error; end
 
-      include Logging
-
       attr_reader :cleaner, :tokenizer, :tagger, :lemmatizer, :ner, :processing_stats
 
       def initialize
-        @cleaner = RubyCrumbler::Pipeline::Cleaner.new
-        @tokenizer = RubyCrumbler::Pipeline::Tokenizer.new
-        @tagger = RubyCrumbler::Pipeline::Tagger.new
-        @lemmatizer = RubyCrumbler::Pipeline::Lemmatizer.new
-        @ner = RubyCrumbler::Pipeline::Ner.new
+        @cleaner = Crumbler::Pipeline::Cleaner.new
+        @tokenizer = Crumbler::Pipeline::Tokenizer.new
+        @tagger = Crumbler::Pipeline::Tagger.new
+        @lemmatizer = Crumbler::Pipeline::Lemmatizer.new
+        @ner = Crumbler::Pipeline::Ner.new
         @processing_stats = { processed: 0, failed: 0, warnings: 0 }
       end
 

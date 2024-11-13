@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-module RubyCrumbler
+module Crumbler
   module GUI
     module Components
       class MenuBar
@@ -18,7 +18,7 @@ module RubyCrumbler
         def create_about_menu_item
           menu_item('About') do
             on_clicked do
-              window('About RubyCrumbler', 700, 500, false) do
+              window('About Crumbler', 700, 500, false) do
                 on_closing do
                   window.destroy
                   1
@@ -30,7 +30,7 @@ module RubyCrumbler
                       default_font family: 'Helvetica', size: 13, weight: :normal, italic: :normal, stretch: :normal
                       string do
                         font family: 'Helvetica', size: 14, weight: :bold, italic: :normal, stretch: :normal
-                        "RubyCrumbler Version #{RubyCrumbler::VERSION}\n\n"
+                        "Crumbler Version #{Crumbler::VERSION}\n\n"
                       end
                       string("Developed by Laura Bernardy, Nora Dirlam, Jakob Engel, and Johanna Garthe.\nMarch 31, 2022\n\nThis project is open source on GitHub.")
                     end
@@ -38,7 +38,7 @@ module RubyCrumbler
                   button('Go to GitHub Repository') do
                     stretchy true
                     on_clicked do
-                      system('open', 'https://github.com/joh-ga/RubyCrumbler')
+                      system('open', 'https://github.com/joh-ga/Crumbler')
                     end
                   end
                 end
@@ -71,7 +71,7 @@ module RubyCrumbler
                   button('Go to GitHub Repository') do
                     stretchy false
                     on_clicked do
-                      system('open', 'https://github.com/joh-ga/RubyCrumbler')
+                      system('open', 'https://github.com/joh-ga/Crumbler')
                     end
                   end
                 end
@@ -140,7 +140,7 @@ module RubyCrumbler
             font family: 'Helvetica', size: 13, weight: :bold, italic: :normal, stretch: :normal
             "Information about the File Naming Convention\n\n"
           end
-          string("To enable a quick identification and location of your converted document depending on the feature applied, the following file naming convention is used in RubyCrumbler.\n\n\n")
+          string("To enable a quick identification and location of your converted document depending on the feature applied, the following file naming convention is used in Crumbler.\n\n\n")
           string do
             font family: 'Helvetica', size: 13, weight: :bold, italic: :normal, stretch: :normal
             "Notes\n\n"

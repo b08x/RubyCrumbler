@@ -14,6 +14,6 @@ rescue StandardError => e
   puts "Error loading .env file: #{e.message}"
 end
 
-require 'ruby_crumbler'
+require 'crumbler'
 
-RubyCrumbler::GUI::CrumblerGUI.new.launch
+Crumbler::GUI::CrumblerGUI.new.launch

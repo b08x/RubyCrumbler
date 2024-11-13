@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-module RubyCrumbler
+module Crumbler
   module GUI
     module Components
       class InputSection
@@ -76,7 +76,7 @@ module RubyCrumbler
               else
                 @input = file
                 @projectname = File.basename(@input, '.*')
-                @doc = RubyCrumbler::Pipeline::Features.new
+                @doc = Crumbler::Pipeline::Features.new
                 puts @input unless file.nil?
                 @doc.newproject(@input, @projectname)
                 msg_box('Notification', 'Upload successfully completed.')
@@ -96,7 +96,7 @@ module RubyCrumbler
               if @projectname == '_process'
                 msg_box('ERROR: No Folder selected.')
               else
-                @doc = RubyCrumbler::Pipeline::Features.new
+                @doc = Crumbler::Pipeline::Features.new
                 @doc.newproject(@input, @projectname)
                 msg_box('Notification', 'Upload successfully completed.')
               end
@@ -120,7 +120,7 @@ module RubyCrumbler
                 msg_box('ERROR: No URL selected.')
               else
                 @projectname = File.basename(@input, '.*')
-                @doc = RubyCrumbler::Pipeline::Features.new
+                @doc = Crumbler::Pipeline::Features.new
                 puts @input unless @input.nil?
                 @doc.newproject(@input, @projectname)
                 msg_box('Notification', 'Upload successfully completed.')

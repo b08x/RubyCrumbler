@@ -2,7 +2,7 @@
 
 require 'pragmatic_tokenizer'
 
-module RubyCrumbler
+module Crumbler
   module Pipeline
     class Tokenizer
       def initialize

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-module RubyCrumbler
+module Crumbler
   module Config
     # Application version
     APP_VERSION = '1.0.0'

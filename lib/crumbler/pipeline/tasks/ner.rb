@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require 'ruby-spacy'
 
-module RubyCrumbler
+module Crumbler
   module Pipeline
     class Ner
       def initialize

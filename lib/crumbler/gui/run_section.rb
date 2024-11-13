@@ -1,11 +1,11 @@
 #!/usr/bin/env ruby
 
-module RubyCrumbler
+module Crumbler
   module GUI
     module Components
       class RunSection
         include Glimmer
-        include RubyCrumbler::Pipeline
+        include Crumbler::Pipeline
 
         attr_reader :fincount, :progressbar, :label
 
